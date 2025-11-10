@@ -1,0 +1,44 @@
+# (v1.1) 删除了 "version: 3.9"，修复了 warning
+services:
+  postgres:
+    # (v1.1 核心修复)
+    # 删除了 "build:"
+    # 改为使用预装好 pgvector 的镜像
+    image: pgvector/pgvector:pg15
+    container_name: futureself_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: futureself
+      POSTGRES_PASSWORD: futureself
+      POSTGRES_DB: futureself_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # (v1.1 核心修复)
+      # 删除了 "docker/" 路径。
+      # 现在它会在 *当前* 文件夹 (Backend/) 寻找 init_db.sql
+      - ./init_db.sql:/docker-entrypoint-initdb.d/init_db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U futureself -d futureself_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: futureself_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:
