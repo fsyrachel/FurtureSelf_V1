@@ -1,9 +1,6 @@
 # (v1.1) 删除了 "version: 3.9"，修复了 warning
 services:
   postgres:
-    # (v1.1 核心修复)
-    # 删除了 "build:"
-    # 改为使用预装好 pgvector 的镜像
     image: pgvector/pgvector:pg15
     container_name: futureself_postgres
     restart: unless-stopped
@@ -15,9 +12,8 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # (v1.1 核心修复)
-      # 删除了 "docker/" 路径。
-      # 现在它会在 *当前* 文件夹 (Backend/) 寻找 init_db.sql
+      # (P1 v1.11) 我们 *不再* 使用 init_db.sql
+      # 我们使用 app/models.py + Base.metadata.create_all()
       - ./init_db.sql:/docker-entrypoint-initdb.d/init_db.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U futureself -d futureself_db"]

@@ -1,0 +1,37 @@
+# (P1) FastAPI 核心
+fastapi
+uvicorn[standard]
+pydantic-settings
+python-dotenv
+
+# (P1) 数据库 (DB v1.3)
+sqlalchemy
+psycopg2-binary # Postgres 驱动
+pgvector # (P1 关键) (v1.5 修复)
+alembic
+
+# (P1) 异步任务 (Day 3)
+celery
+redis
+# (P1) (v1.6 新增) Celery 需要
+kombu
+billiard
+vine
+click-didyoumean
+click-repl
+click-plugins
+python-dateutil
+tzdata
+
+# (P1) AI (Day 3)
+langchain
+langchain-openai
+openai
+# (P1 v1.5) (Tech Specs v1.5) F4.4/F4.6 需要
+langchain-anthropic 
+langchain-google-genai
+langchain_deepseek 
+httpx
+
+# (P1 v1.5) 加密 (Tech Specs v1.5 要求)
+cryptography

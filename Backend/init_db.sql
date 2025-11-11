@@ -1,87 +1,214 @@
--- (P1 关键) 1. 启用 pgvector 扩展
+-- 1. 启用必要的扩展
+-- 启用 pgvector 用于向量存储和相似性搜索
 CREATE EXTENSION IF NOT EXISTS vector;
+-- 启用 uuid-ossp 以使用 gen_random_uuid() 函数生成 UUID
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- (DB v1.3) 表 1: users
+-- 2. 创建一个触发器函数，用于自动更新 updated_at 字段
+-- SQLAlchemy 中的 onupdate=func.now() 对应于数据库中的 BEFORE UPDATE 触发器
+CREATE OR REPLACE FUNCTION trigger_set_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 3. 创建表
+---
+-- 表 1: users
+-- 存储核心用户的信息
+---
 CREATE TABLE IF NOT EXISTS users (
-    id UUID PRIMARY KEY,
-    status VARCHAR(50) NOT NULL DEFAULT 'ONBOARDING', -- (v1.11) 默认 ONBOARDING
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    status VARCHAR(50) NOT NULL DEFAULT 'ONBOARDING',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- (DB v1.3) 表 2: current_profiles (v1.3 新问卷版)
+-- 为 users 表附加 updated_at 触发器
+CREATE TRIGGER set_timestamp_users
+BEFORE UPDATE ON users
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
+
+---
+-- 表 2: current_profiles
+-- 存储用户当前状态的画像数据 (一对一
 CREATE TABLE IF NOT EXISTS current_profiles (
-    id UUID PRIMARY KEY,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    demo_data JSONB, -- (v1.3) F2.1 Demo
-    vals_data JSONB, -- (v1.3) F2.1 PVQ
-    bfi_data JSONB,  -- (v1.3) F2.1 BFI
-    story_data JSONB, -- (v1.3) F2.1 Story
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL UNIQUE,
+    demo_data JSON,
+    vals_data JSON,
+    bfi_data JSON,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    CONSTRAINT fk_user
+        FOREIGN KEY(user_id) 
+        REFERENCES users(id)
+        ON DELETE CASCADE
 );
 
--- (DB v1.3) 表 3: future_profiles (v1.3 新问卷版)
+-- 为 current_profiles 表附加 updated_at 触发器
+CREATE TRIGGER set_timestamp_current_profiles
+BEFORE UPDATE ON current_profiles
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
+
+---
+-- 表 3: future_profiles
+-- 存储用户创建的未来自我画像 (一个用户可以有多个
 CREATE TABLE IF NOT EXISTS future_profiles (
-    id UUID PRIMARY KEY,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    profile_name VARCHAR(255) NOT NULL, -- (F2.2) 职业名称
-    future_values TEXT, -- (v1.3) F2.2 模块1
-    future_vision TEXT, -- (v1.3) F2.2 模块2
-    future_obstacles TEXT, -- (v1.3) F2.2 模块3
-    profile_description TEXT, -- (v1.3) API 同步拼接产物 (AI 读取)
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    profile_name VARCHAR(255) NOT NULL,
+    future_values TEXT,
+    future_vision TEXT,
+    future_obstacles TEXT,
+    profile_description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    CONSTRAINT fk_user
+        FOREIGN KEY(user_id) 
+        REFERENCES users(id)
+        ON DELETE CASCADE
 );
 
--- (DB v1.3) 表 4: letters
+-- 为 future_profiles 表附加 updated_at 触发器
+CREATE TRIGGER set_timestamp_future_profiles
+BEFORE UPDATE ON future_profiles
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
+
+---
+-- 表 4: letters
+-- 存储用户写给未来自我的信 (一个用户可以写多封
 CREATE TABLE IF NOT EXISTS letters (
-    id UUID PRIMARY KEY,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    content TEXT NOT NULL, -- (F3.1.2) 信件原文
-    status VARCHAR(50) NOT NULL DEFAULT 'PENDING', -- (F6.6) PENDING, REPLIES_READY
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    content TEXT NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    CONSTRAINT fk_user
+        FOREIGN KEY(user_id) 
+        REFERENCES users(id)
+        ON DELETE CASCADE
 );
 
--- (DB v1.3) 表 5: letter_replies
+-- 为 letters 表附加 updated_at 触发器
+CREATE TRIGGER set_timestamp_letters
+BEFORE UPDATE ON letters
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
+
+---
+-- 表 5: letter_replies
+-- 存储未来自我对信件的回复 (一封信可以有多个回复，一个回复对应一个未来画像
 CREATE TABLE IF NOT EXISTS letter_replies (
-    id UUID PRIMARY KEY,
-    letter_id UUID NOT NULL REFERENCES letters(id) ON DELETE CASCADE,
-    future_profile_id UUID NOT NULL REFERENCES future_profiles(id) ON DELETE CASCADE,
-    content TEXT NOT NULL, -- (F4.3) AI 回信
-    chat_status VARCHAR(50) NOT NULL DEFAULT 'NOT_STARTED', -- (F3.1.3) NOT_STARTED, COMPLETED
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    letter_id UUID NOT NULL,
+    future_profile_id UUID NOT NULL,
+    content TEXT NOT NULL,
+    chat_status VARCHAR(50) NOT NULL DEFAULT 'NOT_STARTED',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    CONSTRAINT fk_letter
+        FOREIGN KEY(letter_id) 
+        REFERENCES letters(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_future_profile
+        FOREIGN KEY(future_profile_id) 
+        REFERENCES future_profiles(id)
+        ON DELETE CASCADE
 );
 
--- (DB v1.3) 表 6: chat_messages
+-- 为 letter_replies 表附加 updated_at 触发器
+CREATE TRIGGER set_timestamp_letter_replies
+BEFORE UPDATE ON letter_replies
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
+
+---
+-- 表 6: chat_messages
+-- 存储用户与未来自我的聊天记录
 CREATE TABLE IF NOT EXISTS chat_messages (
-    id UUID PRIMARY KEY,
-    future_profile_id UUID NOT NULL REFERENCES future_profiles(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    sender VARCHAR(50) NOT NULL, -- 'USER' or 'AGENT'
-    content TEXT NOT NULL, -- (F3.2.2) 聊天原文
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    future_profile_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    sender VARCHAR(50) NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    CONSTRAINT fk_future_profile
+        FOREIGN KEY(future_profile_id) 
+        REFERENCES future_profiles(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_user
+        FOREIGN KEY(user_id) 
+        REFERENCES users(id)
+        ON DELETE CASCADE
 );
 
--- (DB v1.3) 表 7: reports
+-- 为 chat_messages 表附加 updated_at 触发器
+CREATE TRIGGER set_timestamp_chat_messages
+BEFORE UPDATE ON chat_messages
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
+
+---
+-- 表 7: reports
+-- 存储为用户生成的报告
 CREATE TABLE IF NOT EXISTS reports (
-    id UUID PRIMARY KEY,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    content TEXT, -- (F4.5) WOOP 报告
-    status VARCHAR(50) NOT NULL DEFAULT 'GENERATING', -- (F5.3) GENERATING, READY
-    created_at TIMESTAMTz DEFAULT NOW()
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    content TEXT,
+    status VARCHAR(50) NOT NULL DEFAULT 'GENERATING',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    CONSTRAINT fk_user
+        FOREIGN KEY(user_id) 
+        REFERENCES users(id)
+        ON DELETE CASCADE
 );
 
--- (DB v1.3) 表 8: vector_memory
+-- 为 reports 表附加 updated_at 触发器
+CREATE TRIGGER set_timestamp_reports
+BEFORE UPDATE ON reports
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
+
+---
+-- 表 8: vector_memory
+-- 存储所有可被检索的文本块及其向量
 CREATE TABLE IF NOT EXISTS vector_memory (
-    id UUID PRIMARY KEY,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    future_profile_id UUID REFERENCES future_profiles(id) ON DELETE CASCADE,
-    doc_type VARCHAR(50) NOT NULL, -- 'FUTURE_PROFILE' or 'LETTER_CHUNK'
-    text_chunk TEXT, -- (P1) 被向量化的文本块
-    embedding vector(768) NOT NULL, -- (P1) 768 维, 对应 text-embedding-ada-002
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    future_profile_id UUID, -- 可以为 NULL，表示是用户通用记忆，而不是特定未来画像的记忆
+    doc_type VARCHAR(50) NOT NULL,
+    text_chunk TEXT,
+    embedding VECTOR(1024), -- 假设向量维度为 1024
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    CONSTRAINT fk_user
+        FOREIGN KEY(user_id) 
+        REFERENCES users(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_future_profile
+        FOREIGN KEY(future_profile_id) 
+        REFERENCES future_profiles(id)
+        ON DELETE CASCADE
 );
 
--- (P1) 为 RAG 创建索引 (可选, 但推荐)
-CREATE INDEX IF NOT EXISTS idx_vector_memory_embedding
-ON vector_memory
-USING hnsw (embedding vector_cosine_ops);
+-- 为 vector_memory 表附加 updated_at 触发器
+CREATE TRIGGER set_timestamp_vector_memory
+BEFORE UPDATE ON vector_memory
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
