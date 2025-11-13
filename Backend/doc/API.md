@@ -186,6 +186,16 @@
 
 #### 错误响应
 
+**400 Bad Request** - 信件已成功处理，不允许重复提交
+```json
+{
+  "error": {
+    "code": "LETTER_ALREADY_SUBMITTED",
+    "message": "信件已提交，无法重复提交"
+  }
+}
+```
+
 **400 Bad Request** - 验证失败
 ```json
 {
@@ -312,6 +322,7 @@
 - 提交信件，立即返回202
 - 推送异步任务到Worker
 - Worker为所有未来人设生成回信
+- **支持重试**：如果信件状态为 `FAILED` 或 `PENDING`，可以重新调用此接口重试
 
 #### Query Parameters
 | 参数 | 类型 | 必填 | 说明 |
@@ -345,6 +356,10 @@
    - 为每个未来人设生成回信（调用F4.3 AI链）
    - 存储回信到 `letter_replies` 表
    - 更新信件状态: `status = 'REPLIES_READY'`
+5. **失败处理**:
+   - Worker 会自动重试最多 3 次（指数退避：60s, 120s, 240s）
+   - 如果所有重试都失败，更新状态为 `status = 'FAILED'`
+   - 前端轮询检测到 `FAILED` 状态后，可以重新调用 `/letters/submit` 接口手动重试
 
 ---
 
@@ -367,16 +382,34 @@
 **生成中**
 ```json
 {
-  "status": "PENDING"
+  "status": "PENDING",
+  "content": null
 }
 ```
 
 **已完成**
 ```json
 {
-  "status": "REPLIES_READY"
+  "status": "REPLIES_READY",
+  "content": null
 }
 ```
+
+**处理失败** (需要手动重试)
+```json
+{
+  "status": "FAILED",
+  "content": "亲爱的未来的我，我现在正处于人生的十字路口..."
+}
+```
+
+#### 状态说明
+
+| Status | 含义 | content 字段 | 前端行为 |
+|--------|------|-------------|----------|
+| `PENDING` | 正在处理中 | `null` | 继续轮询，显示"正在处理中，请耐心等待" |
+| `REPLIES_READY` | 回信已生成 | `null` | 跳转到收信箱 |
+| `FAILED` | 处理失败 | 返回信件内容 | 跳回写信页，恢复内容，显示错误提示 |
 
 #### 前端轮询策略
 ```javascript
@@ -390,16 +423,65 @@ async function pollLetterStatus(userId) {
     const data = await response.json();
     
     if (data.status === 'REPLIES_READY') {
-      return true; // 跳转到收信箱
+      return { success: true }; // 跳转到收信箱
+    }
+    
+    if (data.status === 'FAILED') {
+      // 跳回写信页，恢复内容（content 字段已包含在响应中）
+      navigate('/write-letter');
+      setLetterContent(data.content); // 使用响应中的 content
+      showError('信件处理失败，请修改后重新提交');
+      return { success: false, error: 'FAILED', canRetry: true };
+    }
+    
+    // PENDING 状态：继续等待
+    if (data.status === 'PENDING') {
+      // 显示"正在处理中，请耐心等待"
+      showLoadingMessage('正在生成回信，请耐心等待...');
     }
     
     await sleep(3000); // 等待3秒
     attempts++;
   }
   
-  throw new Error('超时');
+  // 超时：跳回写信页（注意：PENDING 状态不返回 content，所以无法恢复内容）
+  navigate('/write-letter');
+  showError('处理超时，请重新提交信件');
+  return { success: false, error: 'TIMEOUT', canRetry: true };
 }
 ```
+
+#### 重试机制
+
+当信件状态为 `FAILED` 或 `PENDING` 时，前端可以直接重新调用 `/letters/submit` 接口进行重试：
+
+```javascript
+// 当检测到 FAILED 状态时，直接重新调用 submit
+async function handleRetry(userId, letterContent) {
+  try {
+    const response = await fetch(`/api/v1/letters/submit?user_id=${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: letterContent })
+    });
+    
+    if (response.ok) {
+      // 重新开始轮询
+      await pollLetterStatus(userId);
+    } else {
+      const error = await response.json();
+      alert(`重试失败: ${error.detail}`);
+    }
+  } catch (error) {
+    console.error('重试请求失败:', error);
+  }
+}
+```
+
+**注意**：
+- 如果信件状态为 `REPLIES_READY`，会返回 `LETTER_ALREADY_SUBMITTED` 错误
+- 重试时会更新信件内容（如果用户修改了）并重新向量化
+- 重试后状态重置为 `PENDING`，重新开始处理流程
 
 ---
 
@@ -681,15 +763,15 @@ async function pollLetterStatus(userId) {
 #### 响应 (200 OK)
 ```json
 {
-  "report_id": "r1s2t3u4-v5w6-x7y8-z9a0-b1c2d3e4f5g6",
-  "status": "READY",
-  "content": {
-    "W": "你的愿望是成为一名优秀的UX研究员，希望能够通过深入的用户研究来影响产品设计，创造更有意义的用户体验。",
-    "O": "理想的结果是，你能够在3年内成为团队的核心成员，领导重要的研究项目，并在工作与生活之间找到良好的平衡。你希望被认可为既懂技术又懂用户的跨界人才。",
-    "O": "主要的障碍包括：1) 对技术背景不够扎实的担忧，害怕在与工程师沟通时遇到困难 2) 对从学术界转向工业界后研究深度可能下降的顾虑 3) 职业转换期的不确定感和自我怀疑。",
-    "P": "你的行动计划包括：1) 报名参加UX专业课程，系统学习用户研究方法论 2) 在当前项目中主动承担用户研究相关任务，积累实践经验 3) 建立个人作品集，记录研究案例 4) 加入UX社群，建立人脉网络 5) 保持对新技术的学习，将技术背景转化为优势而非劣势。"
-  },
-  "created_at": "2024-11-09T11:00:00Z"
+    "report_id": "722d898f-732b-42a4-8933-4f39cfdc9f9a",
+    "status": "READY",
+    "content": {
+        "wish": "成为一名能够理解人与技术关系的用户体验研究员，在学术研究或工业实践中创造有意义的影响",
+        "outcome": "能够在工作中将用户需求与技术实现有效对接，看到研究成果真正改善用户体验，同时在生活与工作之间保持良好平衡",
+        "obstacle": "\"担心技术背景不够扎实，缺乏与工程师或数据科学家平等对话的底气，对技术沟通能力感到焦虑\"",
+        "plan": "\"掌握'翻译'能力，学会用工程师能理解的语言描述用户体验问题；从具体项目开始实践，在开源项目或课程项目中主动承担用户研究部分，刻意练习双向翻译技能；将用户痛点转化为技术需求文档，同时把技术方案用用户故事形式表达\""
+    },
+    "created_at": "2025-11-12T12:53:04.048646Z"
 }
 ```
 
@@ -736,6 +818,7 @@ async function pollLetterStatus(userId) {
 | REPLY_NOT_FOUND | 404 | 回信不存在 |
 | LETTER_TOO_SHORT | 400 | 信件内容过短(<50字) |
 | LETTER_TOO_LONG | 400 | 信件内容过长(>5000字) |
+| LETTER_ALREADY_SUBMITTED | 400 | 信件已成功处理（状态为 REPLIES_READY），无法重复提交 |
 
 ### 聊天相关
 | 错误码 | HTTP状态 | 说明 |
@@ -807,12 +890,35 @@ Content-Type: application/json
 ```
 
 ### 步骤4: 提交信件 (F3.1.2)
+
+**情况A: 首次提交**
 ```http
 POST /api/v1/letters/submit?user_id=xxx
 Content-Type: application/json
 
 {
   "content": "亲爱的未来的我..."
+}
+
+→ Response: { "letter_id": "yyy", "status": "SUBMITTED" }
+```
+
+**情况B: 失败后重试（轮询时已获取内容）**
+```http
+# 1. 轮询状态时，如果失败会返回内容
+GET /api/v1/letters/status?user_id=xxx
+
+→ Response: { 
+  "status": "FAILED",
+  "content": "亲爱的未来的我..."
+}
+
+# 2. 前端跳回写信页，恢复内容，用户修改后重新提交
+POST /api/v1/letters/submit?user_id=xxx
+Content-Type: application/json
+
+{
+  "content": "亲爱的未来的我...（修改后的内容）"
 }
 
 → Response: { "letter_id": "yyy", "status": "SUBMITTED" }
@@ -944,5 +1050,5 @@ open http://localhost:8000/docs
 ---
 
 **文档版本**: v1.5  
-**最后更新**: 2025-11-12  
+**最后更新**: 2025-11-13  
 **维护者**: 开发团队

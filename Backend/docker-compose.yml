@@ -12,8 +12,9 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # (P1 v1.11) 我们 *不再* 使用 init_db.sql
-      # 我们使用 app/models.py + Base.metadata.create_all()
+      # (P1 v1.11) init_db.sql 负责：PostgreSQL 扩展（vector, uuid-ossp）和触发器
+      # main.py 中的 Base.metadata.create_all() 负责：创建表结构
+      # 两者互补：扩展和触发器需要 SQL 脚本，表结构由 SQLAlchemy 管理
       - ./init_db.sql:/docker-entrypoint-initdb.d/init_db.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U futureself -d futureself_db"]
