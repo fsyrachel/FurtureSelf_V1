@@ -28,7 +28,10 @@ export default function ChatPage() {
 
   // 计算用户消息数量
   const userMessageCount = messages.filter((msg) => msg.sender === 'USER').length
-  const isChatCompleted = userMessageCount >= MAX_USER_MESSAGES
+  
+  // 判断聊天是否完成：用户发送了5条消息 且 最后一条消息是AI的回复
+  const lastMessage = messages[messages.length - 1]
+  const isChatCompleted = userMessageCount >= MAX_USER_MESSAGES && lastMessage?.sender === 'AGENT'
   
   // 手动触发报告生成
   const handleGenerateReport = async () => {
@@ -38,7 +41,8 @@ export default function ChatPage() {
     }
     try {
       setIsGeneratingReport(true)
-      await apiClient.generateReport(userId)
+      // 传递 futureProfileId，让报告只基于当前未来人设的聊天记录
+      await apiClient.generateReport(undefined, futureProfileId)
       navigate('/report/processing')
     } catch (err: any) {
       console.error('Failed to generate report', err)
@@ -241,7 +245,7 @@ export default function ChatPage() {
               <div className="rounded-xl border border-emerald-400/60 bg-emerald-500/10 p-4 text-center">
                 <p className="text-sm text-emerald-100 font-semibold">💬 聊天已结束</p>
                 <p className="mt-1 text-xs text-emerald-200/80">
-                  你已发送 {MAX_USER_MESSAGES} 条消息。
+                  你已完成 {MAX_USER_MESSAGES} 轮对话。现在可以生成职业洞见报告了！
                 </p>
                 <Button
                   onClick={handleGenerateReport}
@@ -249,8 +253,18 @@ export default function ChatPage() {
                   disabled={isGeneratingReport}
                   className="mt-4 min-w-[200px]"
                 >
-                  查看报告
+                  生成报告
                 </Button>
+              </div>
+            ) : userMessageCount >= MAX_USER_MESSAGES ? (
+              <div className="rounded-xl border border-sky-400/60 bg-sky-500/10 p-4 text-center">
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-2 h-2 bg-sky-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                  <div className="w-2 h-2 bg-sky-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-2 h-2 bg-sky-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                </div>
+                <p className="mt-2 text-sm text-sky-100">未来的自己正在回复最后一条消息...</p>
+                <p className="mt-1 text-xs text-sky-200/80">请稍候，回复完成后即可生成报告</p>
               </div>
             ) : (
             <div className="flex gap-3">

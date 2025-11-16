@@ -30,12 +30,25 @@ export function DemoForm({ values, onChange, errors }: DemoFormProps) {
     onChange({ ...values, [key]: value })
   }
 
+  const GENDER_OPTIONS = [
+    { value: 'MALE', label: '男' },
+    { value: 'FEMALE', label: '女' },
+    { value: 'OTHER', label: '其他' },
+  ]
+  
   const toggleInterest = (interest: string) => {
-    if (values.interests.includes(interest)) {
-      onChange({ ...values, interests: values.interests.filter((item) => item !== interest) })
-      return
+    // 将字符串按逗号分隔转为数组
+    const interestsArray = values.interests ? values.interests.split(',').map(s => s.trim()).filter(Boolean) : []
+    
+    if (interestsArray.includes(interest)) {
+      // 移除该兴趣
+      const newArray = interestsArray.filter((item) => item !== interest)
+      onChange({ ...values, interests: newArray.join(', ') })
+    } else {
+      // 添加该兴趣
+      const newArray = [...interestsArray, interest]
+      onChange({ ...values, interests: newArray.join(', ') })
     }
-    onChange({ ...values, interests: [...values.interests, interest] })
   }
 
   return (
@@ -56,7 +69,23 @@ export function DemoForm({ values, onChange, errors }: DemoFormProps) {
             className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder:text-slate-300 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-300/40"
           />
         </div>
-
+      <div>
+          <label className="mb-2 block text-sm font-medium text-slate-200">性别</label>
+          <select
+            value={values.gender}
+            onChange={(e) => handleFieldChange('gender', e.target.value)}
+            className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-300/40"
+          >
+            <option value="" disabled>
+              请选择
+            </option>
+            {GENDER_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value} className="text-gray-900">
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>       
         <div>
           <label className="mb-2 block text-sm font-medium text-slate-200">年龄</label>
           <input
@@ -104,7 +133,9 @@ export function DemoForm({ values, onChange, errors }: DemoFormProps) {
         <label className="mb-3 block text-sm font-medium text-slate-200">兴趣方向（可多选）</label>
         <div className="grid gap-3 sm:grid-cols-2">
           {INTEREST_OPTIONS.map((interest) => {
-            const checked = values.interests.includes(interest)
+            // 将字符串按逗号分隔转为数组来检查
+            const interestsArray = values.interests ? values.interests.split(',').map(s => s.trim()).filter(Boolean) : []
+            const checked = interestsArray.includes(interest)
             return (
               <label
                 key={interest}

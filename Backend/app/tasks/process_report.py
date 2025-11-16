@@ -24,20 +24,49 @@ def async_to_sync(awaitable):
     max_retries=MAX_RETRIES,  # 最大重试次数
     default_retry_delay=RETRY_DELAY,  # 默认重试延迟
 )
-def generate_report(self, report_id: str, user_id: str):
+def generate_report(self, report_id: str, user_id: str, letter_id: str = None, future_profile_id: str = None):
     """
     (P1) F4.5 异步总结任务 (Tech Specs v1.5, 4.2节)
+    支持可选参数：
+    - letter_id: 指定信件ID（可选，默认使用最新）
+    - future_profile_id: 指定未来人设ID（可选，默认使用所有聊天记录）
     """
     logger.info(f"F4.5 (Worker): 收到任务! ReportID: {report_id}, UserID: {user_id}")
+    if letter_id:
+        logger.info(f"F4.5 (Worker): 指定信件ID: {letter_id}")
+    if future_profile_id:
+        logger.info(f"F4.5 (Worker): 指定未来人设ID: {future_profile_id}")
     
     db = SessionLocal()
     
     try:
-        # 1. (DB) 获取 *所有* 数据
+        # 1. (DB) 获取数据
         report = db.query(Report).filter(Report.id == uuid.UUID(report_id)).first()
-        letter = db.query(Letter).filter(Letter.user_id == uuid.UUID(user_id)).order_by(Letter.created_at.desc()).first()
         current_profile = db.query(CurrentProfile).filter(CurrentProfile.user_id == uuid.UUID(user_id)).first()
-        chat_history_db = db.query(ChatMessage).filter(ChatMessage.user_id == uuid.UUID(user_id)).order_by(ChatMessage.created_at.asc()).all()
+        
+        # 获取信件：如果指定了 letter_id，使用指定的；否则使用最新的
+        if letter_id:
+            letter = db.query(Letter).filter(Letter.id == uuid.UUID(letter_id)).first()
+            if not letter:
+                logger.error(f"F4.5 (Worker): 指定的信件不存在: {letter_id}")
+                raise ValueError(f"Letter with ID {letter_id} not found")
+        else:
+            letter = db.query(Letter).filter(Letter.user_id == uuid.UUID(user_id)).order_by(Letter.created_at.desc()).first()
+        
+        # 获取聊天记录：如果指定了 future_profile_id，只获取该人设的；否则获取所有
+        if future_profile_id:
+            chat_history_db = db.query(ChatMessage).filter(
+                ChatMessage.user_id == uuid.UUID(user_id),
+                ChatMessage.future_profile_id == uuid.UUID(future_profile_id)
+            ).order_by(ChatMessage.created_at.asc()).all()
+            if not chat_history_db:
+                logger.error(f"F4.5 (Worker): 指定的未来人设没有聊天记录: {future_profile_id}")
+                raise ValueError(f"No chat history found for future_profile_id {future_profile_id}")
+        else:
+            chat_history_db = db.query(ChatMessage).filter(
+                ChatMessage.user_id == uuid.UUID(user_id)
+            ).order_by(ChatMessage.created_at.asc()).all()
+        
         if not all([report, letter, current_profile, chat_history_db]):
             logger.error(f"F4.5 (Worker): 数据不完整。")
             raise ValueError("Data incomplete for report generation.")

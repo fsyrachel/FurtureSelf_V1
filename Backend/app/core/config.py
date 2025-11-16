@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     ]
 
     # 数据库 (DB v1.3)
-    DATABASE_URL: str = "postgresql+psycopg2://futureself:futureself@localhost:5432/futureself_db"
+    DATABASE_URL : str= "postgresql+psycopg2://futureself:futureself@localhost:5432/futureself_db"
   
     # 异步任务 (P1)
     REDIS_URL: str = "redis://localhost:6379/0"

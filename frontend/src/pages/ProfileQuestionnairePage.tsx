@@ -22,9 +22,10 @@ const steps = [
 const createDefaultDemoData = (): DemoData => ({
   name: '',
   age: 0,
+  gender: '',
   status: '',
   field: '',
-  interests: [],
+  interests: '',  // 后端期望字符串
   location: '',
   future_location: '',
 })

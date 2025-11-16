@@ -1,29 +1,25 @@
-# 位于: Backend/app/core/security.py
-"""
-(P1) 加密/解密服务
-(基于 Tech Specs v1.5 - 数据安全要求)
-"""
 import base64
+import hashlib
 from cryptography.fernet import Fernet
 from app.core.config import settings
 
-# 从十六进制字符串密钥创建 Fernet 实例
-# 密钥必须是 32 字节且 URL-safe base64 编码
-# 我们将十六进制密钥转换为字节，然后进行 base64 编码
-key_bytes = bytes.fromhex(settings.ENCRYPTION_KEY)
-fernet_key = base64.urlsafe_b64encode(key_bytes)
+# 1. 对 ENCRYPTION_KEY 做一次 SHA-256，得到 32 字节原始密钥
+raw_key = hashlib.sha256(settings.ENCRYPTION_KEY.encode("utf-8")).digest()  # 32 bytes
+
+# 2. 按 Fernet 要求做 URL-safe Base64 编码
+fernet_key = base64.urlsafe_b64encode(raw_key)
+
+# 3. 创建 Fernet 实例
 cipher_suite = Fernet(fernet_key)
 
+
 def encrypt_data(data: str) -> str:
-    """加密数据"""
     if not data:
         return data
-    encrypted_data = cipher_suite.encrypt(data.encode('utf-8'))
-    return encrypted_data.decode('utf-8')
+    return cipher_suite.encrypt(data.encode("utf-8")).decode("utf-8")
+
 
 def decrypt_data(encrypted_data: str) -> str:
-    """解密数据"""
     if not encrypted_data:
         return encrypted_data
-    decrypted_data = cipher_suite.decrypt(encrypted_data.encode('utf-8'))
-    return decrypted_data.decode('utf-8')
+    return cipher_suite.decrypt(encrypted_data.encode("utf-8")).decode("utf-8")
