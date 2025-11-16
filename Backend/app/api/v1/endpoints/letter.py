@@ -38,49 +38,93 @@ async def submit_letter(
     
     existing_letter = db.query(Letter).filter(Letter.user_id == current_user.id).first()
     
+    # 如果已有信件，检查状态
     if existing_letter is not None:
-        logger.warning(f"F3.1.2 (API): 用户 {current_user.id} 试图提交第 2 封信。")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
-            detail="LETTER_ALREADY_SUBMITTED"
-        )
-    
-    # (P1 v1.11 修复) 事务 (Transaction)
-    try:
-        # 1. (DB) 存入数据库
-        new_letter = Letter(
-            id=uuid.uuid4(),
-            user_id=current_user.id,
-            content=request.content,
-            status='PENDING'
-        )
-        db.add(new_letter)
-        db.flush() # (P1 v1.11) 必须 flush 
-        
-        # 2. (RAG Write) (v1.11 修复) 必须 `await`
-        await add_letter_to_rag_async(db, new_letter)
+        # 如果状态是 REPLIES_READY，不允许重复提交
+        if existing_letter.status == 'REPLIES_READY':
+            logger.warning(f"F3.1.2 (API): 用户 {current_user.id} 试图提交第 2 封信。")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail="LETTER_ALREADY_SUBMITTED"
+            )
+        # 如果状态是 FAILED 或 PENDING，允许重新提交（重试）
+        elif existing_letter.status in ['FAILED', 'PENDING']:
+            logger.info(f"F3.1.2 (API): 用户 {current_user.id} 重试信件处理（状态: {existing_letter.status}）")
+            try:
+                # 删除旧的向量记忆（如果存在）
+                from app.models import VectorMemory
+                old_memories = db.query(VectorMemory).filter(
+                    VectorMemory.user_id == current_user.id,
+                    VectorMemory.doc_type == 'LETTER_CHUNK'
+                ).all()
+                for memory in old_memories:
+                    db.delete(memory)
+                logger.debug(f"F3.1.2 (API): 已删除 {len(old_memories)} 条旧的向量记忆")
+                
+                # 更新现有信件内容并重置状态
+                existing_letter.content = request.content
+                existing_letter.status = 'PENDING'
+                db.add(existing_letter)
+                db.flush()
+                
+                # 重新向量化
+                await add_letter_to_rag_async(db, existing_letter)
+                
+                db.commit()
+                db.refresh(existing_letter)
+                letter_to_process = existing_letter
+            except Exception as e:
+                logger.error(f"F3.1.2 (API) 重试失败 (RAG 或 DB)! 事务回滚。 {e}", exc_info=True)
+                db.rollback()
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+                    detail=f"重试失败: {e}"
+                )
+        else:
+            # 其他未知状态，不允许提交
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"信件状态为 {existing_letter.status}，无法提交"
+            )
+    else:
+        # 没有现有信件，创建新信件
+        # (P1 v1.11 修复) 事务 (Transaction)
+        try:
+            # 1. (DB) 存入数据库
+            new_letter = Letter(
+                id=uuid.uuid4(),
+                user_id=current_user.id,
+                content=request.content,
+                status='PENDING'
+            )
+            db.add(new_letter)
+            db.flush() # (P1 v1.11) 必须 flush 
+            
+            # 2. (RAG Write) (v1.11 修复) 必须 `await`
+            await add_letter_to_rag_async(db, new_letter)
 
-        db.commit()
-        db.refresh(new_letter)
+            db.commit()
+            db.refresh(new_letter)
+            letter_to_process = new_letter
     
-    except Exception as e:
-        logger.error(f"F3.1.2 (API) 失败 (RAG 或 DB)! 事务回滚。 {e}", exc_info=True)
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-            detail=f"提交信件失败: {e}"
-        )
+        except Exception as e:
+            logger.error(f"F3.1.2 (API) 失败 (RAG 或 DB)! 事务回滚。 {e}", exc_info=True)
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+                detail=f"提交信件失败: {e}"
+            )
     
     # 3. (Async) (P1 关键) 推送异步任务到 Redis (Celery)
     try:
-        process_letter.delay(letter_id=str(new_letter.id), user_id=str(current_user.id))
+        process_letter.delay(letter_id=str(letter_to_process.id), user_id=str(current_user.id))
         logger.info(f"F3.1.2 (API): 任务 process_letter 已推送到 Redis。")
     except Exception as e:
         logger.error(f"F3.1.2 (API): Celery 任务推送失败! {e}", exc_info=True)
         pass # (P1 妥协: 提交成功，但 Worker 不会运行)
 
     return {
-        "letter_id": new_letter.id,
+        "letter_id": letter_to_process.id,
         "status": "SUBMITTED"
     }
 
@@ -90,11 +134,22 @@ async def get_letter_status(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """(P1) F6.6 等待页轮询"""
+    """
+    (P1) F6.6 等待页轮询
+    返回信件状态，如果状态为 FAILED，同时返回信件内容供前端恢复
+    """
     letter = db.query(Letter).filter(Letter.user_id == current_user.id).order_by(Letter.created_at.desc()).first()
     if letter is None:
         raise HTTPException(status_code=404, detail="LETTER_NOT_FOUND")
-    return {"status": letter.status}
+    
+    # 如果状态是 FAILED，返回内容让前端恢复
+    if letter.status == 'FAILED':
+        return {"status": letter.status, "content": letter.content}
+    
+    # 如果状态是 PENDING 或 REPLIES_READY，只返回状态（不返回内容）
+    return {"status": letter.status, "content": None}
+
+
 
 
 @router.get("/inbox/latest", response_model=InboxResponse)
@@ -121,7 +176,7 @@ async def get_inbox_latest(
 
     if not letter:
         print(f"No letter found for user_id={current_user.id}")
-        return {"debug": "No letter found", "user_id": str(current_user.id)}
+        raise HTTPException(status_code=404, detail="NO_READY_LETTER")
 
     print(f"Latest letter: id={letter.id}, status={letter.status}, created_at={letter.created_at}")
 

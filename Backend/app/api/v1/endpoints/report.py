@@ -1,8 +1,3 @@
-# 位于: Backend/app/api/v1/endpoints/report.py
-"""
-(P1 关键) Day 7 - F5.1, F5.3, F5.2 API
-(基于 FRD v1.11 和 Tech Specs v1.5)
-"""
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 import uuid
@@ -34,34 +29,52 @@ async def trigger_report_generation(
     """
     logger.info(f"F5.1 (API): 用户 {current_user.id} 正在触发报告生成...")
     
-    # (P1) 检查是否已在生成
+    # (P1) 检查是否已有报告
     existing_report = db.query(Report).filter(Report.user_id == current_user.id).order_by(Report.created_at.desc()).first()
-    if existing_report is not None and existing_report.status == 'GENERATING':# type: ignore
-        logger.warning(f"F5.1 (API): 用户 {current_user.id} 试图重复触发报告。")
-        return {
-            "report_id": existing_report.id,
-            "status": "GENERATING"
-        }
-        
-    # 1. (DB) 存入数据库 (DB v1.3)
-    new_report = Report(
-        user_id=current_user.id,
-        status='GENERATING' # (F5.3 关键)
-    )
-    db.add(new_report)
-    db.commit()
-    db.refresh(new_report)
+    
+    if existing_report is not None:
+        # 如果状态是 READY，不允许重复生成
+        if existing_report.status == 'READY':# type: ignore
+            logger.warning(f"F5.1 (API): 用户 {current_user.id} 试图重复触发报告（已生成）。")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="REPORT_ALREADY_GENERATED"
+            )
+        # 如果状态是 FAILED 或 GENERATING，允许重试
+        elif existing_report.status in ['FAILED', 'GENERATING']:# type: ignore
+            logger.info(f"F5.1 (API): 用户 {current_user.id} 重试报告生成（状态: {existing_report.status}）")
+            # 重置状态为 GENERATING
+            existing_report.status = 'GENERATING'# type: ignore
+            db.add(existing_report)
+            db.commit()
+            db.refresh(existing_report)
+            report_to_process = existing_report
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"报告状态为 {existing_report.status}，无法生成"
+            )
+    else:
+        # 没有现有报告，创建新报告
+        new_report = Report(
+            user_id=current_user.id,
+            status='GENERATING' # (F5.3 关键)
+        )
+        db.add(new_report)
+        db.commit()
+        db.refresh(new_report)
+        report_to_process = new_report
     
     # 2. (Async) (P1 关键) 推送异步任务到 Redis (Celery)
     try:
-        generate_report.delay(report_id=str(new_report.id), user_id=str(current_user.id))
+        generate_report.delay(report_id=str(report_to_process.id), user_id=str(current_user.id))
         logger.info(f"F5.1 (API): 任务 generate_report 已推送到 Redis。")
     except Exception as e:
         logger.error(f"F5.1 (API): Celery 任务推送失败! {e}", exc_info=True)
         pass # (P1) 失败也不应 500
 
     return {
-        "report_id": new_report.id,
+        "report_id": report_to_process.id,
         "status": "GENERATING"
     }
 

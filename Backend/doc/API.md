@@ -57,6 +57,7 @@
 | 400 | Bad Request | 请求参数错误 |
 | 403 | Forbidden | 禁止访问（如超过限制） |
 | 404 | Not Found | 资源不存在 |
+| 422 | Unprocessable Entity | 请求体验证失败（FastAPI/Pydantic 校验），如字段缺失、长度不达标 |
 | 500 | Internal Server Error | 服务器内部错误 |
 
 ---

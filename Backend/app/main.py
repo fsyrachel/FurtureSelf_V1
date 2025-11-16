@@ -1,4 +1,3 @@
-# 位于: Backend/app/main.py
 """FastAPI 主应用入口"""
 
 from fastapi import FastAPI
@@ -6,11 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 import logging
-
-# (Day 2) 导入我们 Day 2 创建的文件
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.api.v1.api import api_router # (Day 2) 导入 api.py
+from app.api.v1.api import api_router 
 
 # 配置日志
 logging.basicConfig(
@@ -27,10 +24,11 @@ async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION}")
     logger.info(f"Environment: {settings.APP_ENV}")
     
-    # (Day 2 关键) 创建数据库表 (取代 init_db.sql)
+    # 创建数据库表结构
+    # 注意：PostgreSQL 扩展（vector, uuid-ossp）和触发器由 init_db.sql 在容器首次启动时创建
+    # SQLAlchemy 只负责创建表结构，无法创建扩展和触发器
     if settings.APP_ENV == "development":
         logger.info("Creating database tables (Base.metadata.create_all)...")
-        # (P1 关键) 确保 DB v1.3 (app/models.py) 已被导入
         from app.models import User, CurrentProfile, FutureProfile, Letter, LetterReply, ChatMessage, Report, VectorMemory
         Base.metadata.create_all(bind=engine)
         logger.info("Database tables created.")
@@ -87,7 +85,7 @@ async def health_check():
     }
 
 
-# (Day 2 关键) 包含 API 路由
+# 包含 API 路由
 app.include_router(api_router, prefix="/api/v1")
 
 

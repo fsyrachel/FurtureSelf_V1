@@ -1,7 +1,3 @@
-# 位于: Backend/app/services/custom_embeddings.py
-"""
-(P1 关键) Day 3 - v1.12 硅基流动 适配器 (asyncio 修复)
-"""
 import logging
 import httpx
 from typing import List
@@ -23,11 +19,11 @@ siliconflow_client = httpx.AsyncClient(
 
 class SiliconflowEmbeddings(Embeddings):
     """
-    (P1 v1.10) 这是一个自定义的 LangChain 适配器
+    自定义的 LangChain 适配器
     """
     
     async def _call_siliconflow_api(self, input_texts: List[str]) -> List[List[float]]:
-        """ (P1 v1.10) 封装的 API 调用 (异步) """
+        """ 封装的 API 调用 (异步) """
         
         if not settings.SILICONFLOW_API_KEY or "sk-..." in settings.SILICONFLOW_API_KEY:
              logger.error("SILICONFLOW_API_KEY 未在 .env 中正确配置!")
@@ -62,8 +58,7 @@ class SiliconflowEmbeddings(Embeddings):
             logger.error(f"调用 硅基流动 Embedding API 时失败: {e}", exc_info=True)
             raise
 
-    # (P1 v1.12 修复)
-    # 我们 *必须* 实现 LangChain 的 async 接口
+    # 实现 LangChain 的 async 接口
     async def aembed_documents(self, texts: List[str]) -> List[List[float]]:
         """(P1 v1.12) (Async) - 用于 F2.2 / F3.1.2 (RAG 写入)"""
         logger.debug(f"(RAG Write Async) 正在为 {len(texts)} 个文档块调用 硅基流动...")
