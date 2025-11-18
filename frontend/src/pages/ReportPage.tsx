@@ -80,7 +80,7 @@ export default function ReportPage() {
               <div className="w-2 h-2 bg-sky-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
               <div className="w-2 h-2 bg-sky-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
             </div>
-            <p className="mt-4 text-slate-200">正在加载报告...</p>
+            <p className="mt-4 text-slate-200">正在从时空数据库中提取洞察报告...</p>
           </div>
         </div>
       </StarFieldLayout>
@@ -93,7 +93,7 @@ export default function ReportPage() {
         <div className="mx-auto flex w-full max-w-[1100px] flex-col items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <p className="text-lg text-red-200 mb-4">{error || '报告不存在'}</p>
-            <Button onClick={() => navigate('/')}>返回首页</Button>
+            <Button onClick={() => navigate('/')}>返回驾驶舱</Button>
           </div>
         </div>
       </StarFieldLayout>
@@ -106,23 +106,23 @@ export default function ReportPage() {
         <header className="mb-12 flex items-start justify-between">
           <div className="flex-1">
             <p className="text-xs uppercase tracking-[0.45rem] text-sky-200/80">
-              Step F5.2
+              时空洞察协议
             </p>
             <h1 className="mt-3 text-4xl font-extrabold text-white md:text-5xl">
-              你的职业洞见报告
+              时空洞察报告
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-200">
-              基于 WOOP 框架与未来自我对话内容生成，帮助你聚焦愿景、识别障碍并制定跨越策略。
+              基于与未来化身的深度链接数据，AI 领航员为你解析出当前时间线的核心参数，助你校准航向，实现时空跃迁。
             </p>
           </div>
           <Button onClick={() => navigate('/')} variant="outline" className="ml-4 flex-shrink-0">
-            返回首页
+            返回驾驶舱
           </Button>
         </header>
 
         <section className="rounded-[32px] border border-white/10 bg-white/8 p-10 shadow-[0_45px_140px_-45px_rgba(120,140,255,0.6)] backdrop-blur-xl">
           <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.4rem] text-sky-100/80 inline-block">
-            WOOP Framework
+            时空跃迁框架 (WOOP)
           </div>
 
           <div className="mt-10 grid gap-6 md:grid-cols-2">
@@ -154,7 +154,7 @@ export default function ReportPage() {
 
           <div className="mt-10 rounded-2xl border border-white/10 bg-white/5 px-6 py-5 text-sm text-slate-200/85">
             <p>
-              📊 报告生成时间：{new Date(report.created_at).toLocaleString('zh-CN')}
+              📊 数据解码时间：{new Date(report.created_at).toLocaleString('zh-CN')}
             </p>
           </div>
         </section>

@@ -7,11 +7,17 @@ export const validateDemoData = (data: any): string[] => {
   if (!data.age || data.age < 18 || data.age > 100) {
     errors.push('年龄必须在18-100之间')
   }
+  if (!data.gender) {
+    errors.push('请选择性别')
+  }
   if (!data.status) {
     errors.push('请选择当前状态')
   }
   if (!data.field) {
     errors.push('请输入专业领域')
+  }
+  if (!data.interests) {
+    errors.push('请至少选择一个兴趣方向')
   }
   if (!data.location) {
     errors.push('请输入当前位置')

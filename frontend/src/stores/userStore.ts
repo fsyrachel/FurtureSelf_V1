@@ -5,9 +5,18 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import axios from 'axios'
+import { apiClient } from '../services/api'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+// UUID 验证正则表达式
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * 验证字符串是否是有效的 UUID
+ */
+function isValidUUID(str: string | null): boolean {
+  if (!str) return false
+  return UUID_REGEX.test(str)
+}
 
 interface UserState {
   userId: string | null
@@ -36,23 +45,20 @@ export const useUserStore = create<UserState>()(
         set({ isLoading: true, error: null })
 
         try {
-/*           const existingUserId = get().userId
+          let existingUserId = get().userId
 
-          const response = await axios.post(`${API_URL}/api/v1/user/init`, {
-            anonymous_user_id: existingUserId,
-          })
+          // 验证 userId 是否是有效的 UUID
+          // 如果不是（比如旧的 mock 数据 "fake-user-hys-123"），则重置为 null
+          if (existingUserId && !isValidUUID(existingUserId)) {
+            console.warn(`Invalid UUID in localStorage: ${existingUserId}, resetting to null`)
+            existingUserId = null
+          }
+
+          const response = await apiClient.initUser(existingUserId)
 
           set({
-            userId: response.data.user_id,
-            status: response.data.status,
-            isLoading: false,
-          }) */
-        
-            // 2. 添加我们 Day 2 任务需要的“模拟数据”
-          console.log("MOCK: 模拟新用户，强制进入 ONBOARDING 流程...");
-          set({
-            userId: "fake-user-hys-123",  // 这是一个假的 ID，没关系
-            status: "ONBOARDING",        // <--- 这是最关键的一行！
+            userId: response.user_id,
+            status: response.status,
             isLoading: false,
           })
 
@@ -94,4 +100,3 @@ export const useUserStore = create<UserState>()(
     }
   )
 )
-

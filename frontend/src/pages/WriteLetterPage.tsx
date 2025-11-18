@@ -96,13 +96,13 @@ export default function WriteLetterPage() {
       <div className="mx-auto flex w-full max-w-[1100px] flex-col">
         <header className="mb-12">
           <p className="text-xs uppercase tracking-[0.45rem] text-sky-200/80">
-            Step F3.1.2
+            信标 03: 发送跨时空信号
           </p>
           <h1 className="mt-3 text-4xl font-extrabold text-white md:text-5xl">
-            给未来的自己写信
+            封装你的时空胶囊
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-200">
-            写下一封来自现在的讯息，将它发送到未来。信件将触发 AI 生成的未来回应，并成为职业洞见的重要素材。
+            将你此刻的想法、困惑与期待封装成一份时空数据包，发送给五年后的自己。这份数据将作为启动未来对话的初始信号，并生成第一份时空洞见报告。
           </p>
         </header>
 
@@ -110,20 +110,21 @@ export default function WriteLetterPage() {
           {/* 重试提示 */}
           {isRetry && (
             <div className="mb-6 rounded-xl border border-orange-400/60 bg-orange-500/10 p-4 text-sm text-orange-100">
-              <p className="font-semibold">⚠️ 信件处理超时或失败</p>
+              <p className="font-semibold">⚠️ 信号传输中断</p>
               <p className="mt-1 text-orange-200/80">
-                请检查内容后重新提交。你的信件内容已自动恢复。
+                检测到传输协议错误。数据包已自动回滚，请校验后重新启动时空传送。
               </p>
             </div>
           )}
 
           {/* 引导问题 */}
-          <div className="mb-8 space-y-3">
-            {guideQuestions.map((question, index) => (
-              <p key={index} className="text-lg font-bold text-white">
-                {question}
-              </p>
-            ))}
+          <div className="mb-8 space-y-3 rounded-2xl border border-white/10 bg-white/5 px-6 py-5">
+            <h3 className="text-lg font-semibold text-white">时空信标引导：</h3>
+            <ul className="list-inside list-disc space-y-2 pt-2 text-slate-200">
+              <li>想象一下，5年后的你，或许正准备开启一天的工作。你希望给TA写一封什么样的信？</li>
+              <li>此刻你最大的困惑是什么？你希望未来的自己能给你什么建议？</li>
+              <li>你现在最珍视的是什么？你希望5年后的自己依然没有忘记的初心是什么？</li>
+            </ul>
           </div>
 
           {/* 文本输入区域 */}
@@ -131,7 +132,7 @@ export default function WriteLetterPage() {
             <div className="space-y-4">
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-200">
-                  信件内容
+                  时空胶囊数据包
                 </label>
                 <textarea
                   value={letterContent}
@@ -139,7 +140,7 @@ export default function WriteLetterPage() {
                     setLetterContent(e.target.value)
                     setError(null)
                   }}
-                  placeholder="在这里写下你想对未来的自己说的话..."
+                  placeholder="请在这里写下你想对未来的自己说的话，输入发往未来..."
                   rows={12}
                   maxLength={MAX_LENGTH}
                   className="w-full rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm leading-6 text-white placeholder:text-slate-400 focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-300/30"
@@ -147,10 +148,10 @@ export default function WriteLetterPage() {
                 <div className="mt-2 flex items-center justify-between">
                   <p className="text-xs text-slate-300">
                     {charCount < MIN_LENGTH
-                      ? `至少需要 ${MIN_LENGTH} 字（当前：${charCount} 字）`
+                      ? `最低信号强度 ${MIN_LENGTH} 字（当前：${charCount} 字）`
                       : charCount > MAX_LENGTH
-                      ? `超过最大长度 ${MAX_LENGTH} 字`
-                      : '建议 300-500 字'}
+                      ? `超过最大信号长度 ${MAX_LENGTH} 字`
+                      : '推荐信号强度：300-500 字'}
                   </p>
                   <p
                     className={`text-xs ${
@@ -170,14 +171,14 @@ export default function WriteLetterPage() {
 
               <div className="mt-8 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <p className="text-xs text-slate-300">
-                  📌 提示：信件内容将用于生成 AI 回信，请尽量详细地表达你的想法和感受。
+                  数据协议：这份数据包将用于生成 AI 时空回信，并作为个人航线分析的核心素材。请确保信号的深度与清晰度。
                 </p>
                 <Button
                   onClick={handleSubmit}
                   loading={isSubmitting}
                   disabled={!isValid || isSubmitting}
                 >
-                  发送给未来的我
+                  启动时空传送
                 </Button>
               </div>
             </div>

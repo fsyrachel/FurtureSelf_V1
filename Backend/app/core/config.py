@@ -24,7 +24,7 @@ class Settings(BaseSettings):
 
     # 数据库 (DB v1.3)
     DATABASE_URL: str = "postgresql+psycopg2://futureself:futureself@localhost:5432/futureself_db"
-  
+
     # 异步任务 (P1)
     REDIS_URL: str = "redis://localhost:6379/0"
     # # (P1 v1.11 变更)
@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     # BASE_URL : str = "https://www.chataiapi.com"
     # OPEN_API_KEY: str = "sk-i9V9UPL3RLOS43zeSgVFxR4V2vwRpoceRLkbIXgkf6sU7rvi"  # (P1 v1.10)
     # LLM (P1)
-    SILICONFLOW_API_KEY: str = "sk-ebosnxfdepqjdfxeghinihzjdtdofoadwkflfgmgihsqvkgx" # (P1 v1.10)
+    SILICONFLOW_API_KEY: str = "sk-yfepdlpbtzvofydhieehhnteodpylaatesoxbhbgtaxhgovi" # (P1 v1.10)
     SF_MODEL_STANDARD: str = "zai-org/GLM-4.6" # (示例: 一个强大的模型)
     SF_MODEL_FAST: str = "zai-org/GLM-4.6"                      # (示例: 一个快速的模型)
     SF_MODEL_VALIDATOR: str = "deepseek-ai/DeepSeek-V3.2-Exp"

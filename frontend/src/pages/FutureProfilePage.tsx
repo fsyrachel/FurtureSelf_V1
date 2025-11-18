@@ -22,7 +22,7 @@ const ConceptionForm = ({ data, setData, onNext }: any) => {
       {/* 模块一：价值观 */}
       <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
         <label className="text-xl font-bold text-white">
-          模块一：请描述一下你认为未来的职业什么是最重要的
+          航线参数 1: 核心价值锚点——请描述一下你认为未来的职业什么是最重要的
         </label>
         <ul className="list-disc list-inside text-sm text-slate-300 mt-3 space-y-2 pl-2">
           <li>
@@ -37,14 +37,14 @@ const ConceptionForm = ({ data, setData, onNext }: any) => {
           onChange={(e) => handleChange('future_values', e.target.value)}
           className="w-full p-3 mt-4 text-white bg-black/20 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-300/30" 
           rows={5} 
-          placeholder="我希望我的工作能够..."
+          placeholder="我的核心驱动力是..."
         />
       </div>
 
       {/* 模块二：愿景 */}
       <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
         <label className="text-xl font-bold text-white">
-          模块二：请尽情畅想，未来的你处在最理想、最满意的职业状态
+          航线参数 2: 理想未来愿景——请尽情畅想，未来的你处在最理想、最满意的职业状态
         </label>
         <ul className="list-disc list-inside text-sm text-slate-300 mt-3 space-y-2 pl-2">
           <li>
@@ -62,14 +62,14 @@ const ConceptionForm = ({ data, setData, onNext }: any) => {
           onChange={(e) => handleChange('future_vision', e.target.value)}
           className="w-full p-3 mt-4 text-white bg-black/20 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-300/30" 
           rows={5} 
-          placeholder="我理想的状态是..."
+          placeholder="在理想的时间线中，我每天会..."
         />
       </div>
       
       {/* 模块三：障碍 */}
       <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
         <label className="text-xl font-bold text-white">
-          模块三：你认为目前你需要克服什么困难
+          航线参数 3: 识别潜在的现实扭曲力场——你认为目前你需要克服什么困难
         </label>
         <ul className="list-disc list-inside text-sm text-slate-300 mt-3 space-y-2 pl-2">
           <li>
@@ -87,12 +87,12 @@ const ConceptionForm = ({ data, setData, onNext }: any) => {
           onChange={(e) => handleChange('future_obstacles', e.target.value)}
           className="w-full p-3 mt-4 text-white bg-black/20 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-300/30" 
           rows={5} 
-          placeholder="我担心的是..."
+          placeholder="要想到达理想的未来，我需要克服..."
         />
       </div>
 
       <Button onClick={onNext} className="w-full">
-        下一步：创建人设
+        参数设定完成，开始构建未来化身
       </Button>
     </div>
   )
@@ -132,9 +132,9 @@ const NamingForm = ({ conceptionData, onBack, onSubmit, isLoading }: any) => {
   return (
     <div className="space-y-6">
       <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-        <h2 className="text-2xl font-semibold text-white">创建未来人设 (1-3个)</h2>
+        <h2 className="text-2xl font-semibold text-white">命名你的未来化身 (1-3个)</h2>
         <p className="text-sm text-slate-300 mt-2">
-          根据你刚才的构想，探索未来时空中不同职业的你。
+          基于刚才设定的航线参数，为你在平行时空中的不同可能性命名。
         </p>
         
         <div className="space-y-4 mt-6">
@@ -143,31 +143,31 @@ const NamingForm = ({ conceptionData, onBack, onSubmit, isLoading }: any) => {
             value={profileNames[0]}
             onChange={(e) => handleNameChange(0, e.target.value)}
             className="w-full p-3 text-white bg-black/20 border border-white/20 rounded-lg" 
-            placeholder="人设 1 (例如: UX研究员)"
+            placeholder="未来化身 1 (例如: UX研究员)"
           />
           <input 
             type="text" 
             value={profileNames[1]}
             onChange={(e) => handleNameChange(1, e.target.value)}
             className="w-full p-3 text-white bg-black/20 border border-white/20 rounded-lg" 
-            placeholder="人设 2 (可选, 例如: 继续读博的我)"
+            placeholder="未来化身 2 (可选, 例如: 继续读博的我)"
           />
           <input 
             type="text" 
             value={profileNames[2]}
             onChange={(e) => handleNameChange(2, e.target.value)}
             className="w-full p-3 text-white bg-black/20 border border-white/20 rounded-lg" 
-            placeholder="人设 3 (可选, 例如: 自由职业者)"
+            placeholder="未来化身 3 (可选, 例如: 自由职业者)"
           />
         </div>
       </div>
       
       <div className="flex gap-4">
         <Button variant="outline" onClick={onBack} className="flex-1">
-          返回修改构想
+          返回修改航线参数
         </Button>
         <Button onClick={handleSubmit} loading={isLoading} className="flex-1">
-          与平行时空的自己连接
+          建立时空链接
         </Button>
       </div>
     </div>
@@ -226,15 +226,15 @@ export default function FutureProfilePage() {
       <div className="mx-auto flex w-full max-w-[1100px] flex-col">
         <header className="mb-12">
           <p className="text-xs uppercase tracking-[0.45rem] text-sky-200/80">
-            Step F2.2
+            未来构想
           </p>
           <h1 className="mt-3 text-4xl font-extrabold text-white md:text-5xl">
-            {currentStep === 1 ? "未来构想" : "创建未来人设"}
+            {currentStep === 1 ? '信标 02: 设定未来航线' : '创建未来化身'}
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-200">
             {currentStep === 1 
-              ? "这是启程的最后一步。请先回答三个关于未来的问题。" 
-              : "现在，为你刚才的构想命名 1-3 个人设。"}
+              ? "这是校准航线的关键一步。请回答三个核心问题，为未来的可能性建模。" 
+              : "现在，为你刚才的构想命名 1-3 个未来化身。"}
           </p>
         </header>
 

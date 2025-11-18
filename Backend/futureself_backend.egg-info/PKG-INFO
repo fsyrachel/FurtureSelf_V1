@@ -1,0 +1,45 @@
+Metadata-Version: 2.4
+Name: futureself-backend
+Version: 0.1.0
+Summary: Backend for the FutureSelf project.
+Author: Your Name
+Author-email: your.email@example.com
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Requires-Dist: fastapi
+Requires-Dist: uvicorn[standard]
+Requires-Dist: pydantic-settings
+Requires-Dist: python-dotenv
+Requires-Dist: sqlalchemy
+Requires-Dist: psycopg2-binary
+Requires-Dist: pgvector
+Requires-Dist: alembic
+Requires-Dist: celery
+Requires-Dist: redis
+Requires-Dist: kombu
+Requires-Dist: billiard
+Requires-Dist: vine
+Requires-Dist: click-didyoumean
+Requires-Dist: click-repl
+Requires-Dist: click-plugins
+Requires-Dist: python-dateutil
+Requires-Dist: tzdata
+Requires-Dist: langchain
+Requires-Dist: langchain-openai
+Requires-Dist: openai
+Requires-Dist: langchain-anthropic
+Requires-Dist: langchain-google-genai
+Requires-Dist: langchain_deepseek
+Requires-Dist: httpx
+Requires-Dist: cryptography
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary

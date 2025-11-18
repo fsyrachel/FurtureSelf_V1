@@ -117,10 +117,16 @@ class ChatHistoryResponse(BaseModel):
     created_at: datetime
 
 # --- F5.1 (Report Generate) ---
+class ReportGenerateRequest(BaseModel):
+    letter_id: Optional[uuid.UUID] = None  # 指定信件（可选，默认使用最新）
+    future_profile_id: Optional[uuid.UUID] = None  # 指定未来人设（可选，默认使用所有）
+
 class ReportGenerateResponse(BaseModel):
     report_id: uuid.UUID
     status: str = "GENERATING"
-
+    letter_id: Optional[uuid.UUID] = None
+    future_profile_id: Optional[uuid.UUID] = None
+    
 # --- F5.3 (Report Status) ---
 class ReportStatusResponse(BaseModel):
     status: str # 'GENERATING', 'READY', or 'FAILED'

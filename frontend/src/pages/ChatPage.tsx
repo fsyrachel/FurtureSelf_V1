@@ -28,7 +28,10 @@ export default function ChatPage() {
 
   // 计算用户消息数量
   const userMessageCount = messages.filter((msg) => msg.sender === 'USER').length
-  const isChatCompleted = userMessageCount >= MAX_USER_MESSAGES
+  
+  // 判断聊天是否完成：用户发送了5条消息 且 最后一条消息是AI的回复
+  const lastMessage = messages[messages.length - 1]
+  const isChatCompleted = userMessageCount >= MAX_USER_MESSAGES && lastMessage?.sender === 'AGENT'
   
   // 手动触发报告生成
   const handleGenerateReport = async () => {
@@ -38,7 +41,8 @@ export default function ChatPage() {
     }
     try {
       setIsGeneratingReport(true)
-      await apiClient.generateReport(userId)
+      // 传递 futureProfileId，让报告只基于当前未来人设的聊天记录
+      await apiClient.generateReport(undefined, futureProfileId)
       navigate('/report/processing')
     } catch (err: any) {
       console.error('Failed to generate report', err)
@@ -166,7 +170,7 @@ export default function ChatPage() {
               <div className="w-2 h-2 bg-sky-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
               <div className="w-2 h-2 bg-sky-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
             </div>
-            <p className="mt-4 text-slate-200">正在加载聊天记录...</p>
+            <p className="mt-4 text-slate-200">正在建立与未来化身的链接...</p >
           </div>
         </div>
       </StarFieldLayout>
@@ -180,17 +184,17 @@ export default function ChatPage() {
         <header className="mb-4 flex items-start justify-between py-2">
           <div className="flex-1">
             <p className="text-xs uppercase tracking-[0.45rem] text-sky-200/80">
-              Step F3.2
-            </p>
+              时空深度链接
+            </p >
             <h1 className="mt-2 text-3xl font-extrabold text-white md:text-4xl">
-              与未来对话
+              链接未来化身
             </h1>
             <p className="mt-1 text-xs text-slate-300">
-              最多可发送 {MAX_USER_MESSAGES} 条消息 · 已发送 {userMessageCount} / {MAX_USER_MESSAGES}
-            </p>
+              链接额度：{MAX_USER_MESSAGES} 次交互 · 已交互 {userMessageCount} / {MAX_USER_MESSAGES}
+            </p >
           </div>
           <Button onClick={() => navigate('/inbox')} variant="outline" className="text-sm flex-shrink-0 ml-4">
-            返回收信箱
+            返回信号接收站
           </Button>
         </header>
 
@@ -199,8 +203,8 @@ export default function ChatPage() {
           {messages.length === 0 ? (
             <div className="flex items-center justify-center min-h-[300px] py-8">
               <div className="text-center">
-                <p className="text-lg text-slate-300 mb-2">开始与未来的自己对话</p>
-                <p className="text-sm text-slate-400">发送第一条消息，开始你们的跨时空对话。</p>
+                <p className="text-lg text-slate-300 mb-2">链接已建立</p >
+                <p className="text-sm text-slate-400">发送你的第一条信息，开始这次深度链接。</p >
               </div>
             </div>
           ) : (
@@ -217,10 +221,10 @@ export default function ChatPage() {
                         : 'bg-white/10 text-white/90 border border-white/10'
                     }`}
                   >
-                    <p className="text-sm leading-relaxed whitespace-pre-line">{message.content}</p>
+                    <p className="text-sm leading-relaxed whitespace-pre-line">{message.content}</p >
                     <p className="mt-2 text-xs opacity-70">
-                      {message.sender === 'USER' ? '现在 · 你' : '未来自我 · 回信'} · {formatTime(message.created_at)}
-                    </p>
+                      {message.sender === 'USER' ? '当前坐标 · 你' : '未来坐标 · 化身'} · {formatTime(message.created_at)}
+                    </p >
                   </div>
                 </div>
               ))}
@@ -239,18 +243,28 @@ export default function ChatPage() {
 
             {isChatCompleted ? (
               <div className="rounded-xl border border-emerald-400/60 bg-emerald-500/10 p-4 text-center">
-                <p className="text-sm text-emerald-100 font-semibold">💬 聊天已结束</p>
+                <p className="text-sm text-emerald-100 font-semibold">💬 链接已完成</p >
                 <p className="mt-1 text-xs text-emerald-200/80">
-                  你已发送 {MAX_USER_MESSAGES} 条消息。
-                </p>
+                  你已完成本次 {MAX_USER_MESSAGES} 轮深度交互。现在可以生成本次链接的时空洞察报告了！
+                </p >
                 <Button
                   onClick={handleGenerateReport}
                   loading={isGeneratingReport}
                   disabled={isGeneratingReport}
                   className="mt-4 min-w-[200px]"
                 >
-                  查看报告
+                  生成时空洞察报告
                 </Button>
+              </div>
+            ) : userMessageCount >= MAX_USER_MESSAGES ? (
+              <div className="rounded-xl border border-sky-400/60 bg-sky-500/10 p-4 text-center">
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-2 h-2 bg-sky-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                  <div className="w-2 h-2 bg-sky-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-2 h-2 bg-sky-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                </div>
+                <p className="mt-2 text-sm text-sky-100">未来化身正在处理你的最后一条信息...</p >
+                <p className="mt-1 text-xs text-sky-200/80">请稍候，回复完成后即可生成报告</p >
               </div>
             ) : (
             <div className="flex gap-3">
@@ -266,7 +280,7 @@ export default function ChatPage() {
                     handleSendMessage()
                   }
                 }}
-                placeholder="输入你的消息..."
+                placeholder="输入你的问题或想法..."
                 rows={3}
                 maxLength={1000}
                 disabled={isSending || isChatCompleted}
@@ -278,7 +292,7 @@ export default function ChatPage() {
                 disabled={!inputContent.trim() || isSending || isChatCompleted}
                 className="self-end"
               >
-                发送
+                发送信号
               </Button>
             </div>
           )}
@@ -287,10 +301,10 @@ export default function ChatPage() {
           <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
             <p>
               {inputContent.length > 0 && `${inputContent.length} / 1000`}
-            </p>
+            </p >
             <p>
               按 Enter 发送，Shift + Enter 换行
-            </p>
+            </p >
           </div>
         </div>
       </div>

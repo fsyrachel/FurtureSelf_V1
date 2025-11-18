@@ -56,7 +56,7 @@ export default function LetterReplyPage() {
               <div className="w-2 h-2 bg-sky-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
               <div className="w-2 h-2 bg-sky-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
             </div>
-            <p className="mt-4 text-slate-200">正在加载回信...</p>
+            <p className="mt-4 text-slate-200">正在解码未来信号...</p>
           </div>
         </div>
       </StarFieldLayout>
@@ -70,7 +70,7 @@ export default function LetterReplyPage() {
           <div className="rounded-xl border border-red-400/60 bg-red-500/10 p-6 text-center max-w-md">
             <p className="text-sm text-red-100 mb-4">{error || '回信不存在'}</p>
             <Button onClick={() => navigate('/inbox')} variant="outline">
-              返回收信箱
+              返回信号接收站
             </Button>
           </div>
         </div>
@@ -86,10 +86,10 @@ export default function LetterReplyPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.45rem] text-sky-200/80">
-                Step F3.1.3
+                未来回响解码
               </p>
               <h1 className="mt-3 text-4xl font-extrabold text-white md:text-5xl">
-                来自未来的回信
+                信号解码完成
               </h1>
             </div>
             <Button
@@ -97,7 +97,7 @@ export default function LetterReplyPage() {
               variant="outline"
               className="text-sm"
             >
-              返回收信箱
+              返回信号接收站
             </Button>
           </div>
         </header>
@@ -108,7 +108,7 @@ export default function LetterReplyPage() {
           <div className="mb-8 flex items-center justify-between border-b border-white/10 pb-6">
             <div>
               <p className="text-xs uppercase tracking-[0.3rem] text-sky-200/70 mb-2">
-                来自
+                信号源
               </p>
               <h2 className="text-2xl font-bold text-white">{reply.from_profile_name}</h2>
             </div>
@@ -120,7 +120,7 @@ export default function LetterReplyPage() {
                     : 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40'
                 }`}
               >
-                {reply.chat_status === 'NOT_STARTED' ? '未开始' : '已完成'}
+                {reply.chat_status === 'NOT_STARTED' ? '链接待开启' : '链接已归档'}
               </span>
             </div>
           </div>
@@ -156,16 +156,16 @@ export default function LetterReplyPage() {
           {/* 操作按钮区域 */}
           <div className="mt-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="text-sm text-slate-300">
-              <p>💬 想要与未来的自己深入对话？点击下方按钮开始聊天。</p>
+              <p>准备好与你的未来化身进行深度链接了吗？</p>
             </div>
             <div className="flex gap-3">
               {reply.chat_status === 'NOT_STARTED' ? (
                 <Button onClick={handleStartChat} className="min-w-[160px]">
-                  发起聊天
+                  建立深度链接
                 </Button>
               ) : (
                 <Button disabled className="min-w-[160px] opacity-50 cursor-not-allowed">
-                  聊天已结束
+                  链接已归档
                 </Button>
               )}
             </div>

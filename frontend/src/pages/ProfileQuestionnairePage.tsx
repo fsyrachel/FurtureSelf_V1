@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import StarFieldLayout from '@/components/layouts/StarFieldLayout'
 import { DemoForm } from '@/components/questionnaire/DemoForm'
 import { PVQForm } from '@/components/questionnaire/PVQForm'
@@ -22,9 +22,10 @@ const steps = [
 const createDefaultDemoData = (): DemoData => ({
   name: '',
   age: 0,
+  gender: '',
   status: '',
   field: '',
-  interests: [],
+  interests: '',
   location: '',
   future_location: '',
 })
@@ -63,6 +64,12 @@ export default function ProfileQuestionnairePage() {
   const [valsData, setValsData] = useState<ValsData>(createDefaultValsData)
   const [bfiData, setBFIData] = useState<BFIData>(createDefaultBFIData)
 
+  // --- 新增: 步骤切换时自动滚动到顶部 ---
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [currentStep])
+
+  // --- 1. 表单组件配置 ---
   const [stepErrors, setStepErrors] = useState<string[]>([])
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -169,10 +176,11 @@ export default function ProfileQuestionnairePage() {
     <StarFieldLayout className="px-6 py-16 md:px-12 lg:px-20 xl:px-32">
       <div className="mx-auto flex w-full max-w-[1100px] flex-col">
         <header className="mb-10">
-          <p className="text-xs uppercase tracking-[0.45rem] text-sky-200/80">Step F2.1</p>
-          <h1 className="mt-3 text-4xl font-extrabold text-white md:text-5xl">当前档案问卷</h1>
+          <p className="text-xs uppercase tracking-[0.45rem] text-sky-200/80">连接信标</p>
+          <h1 className="mt-3 text-4xl font-extrabold text-white md:text-5xl">信标 01: 校准当前坐标
+          </h1>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-200">
-            我们将通过多步骤问卷，为你建立当下的职业画像。这些信息将成为未来回信、洞见报告与成长计划的基础。
+            接入深层时空网络，通过多维度问卷校准你的当前坐标。这是未来时空回信、洞见报告与个人成长航线的基础数据。
           </p>
         </header>
 
@@ -181,7 +189,7 @@ export default function ProfileQuestionnairePage() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.4rem] text-sky-100/80">
-                  Questionnaire Progress
+                  坐标校准进度
                 </div>
                 <h2 className="mt-4 text-2xl font-semibold text-white">
                   {steps[currentStep].title}
@@ -216,7 +224,7 @@ export default function ProfileQuestionnairePage() {
                     }`}
                   >
                     <p className="text-xs uppercase tracking-[0.3rem] text-slate-200/70">
-                      Step {step.label}
+                      阶段 {step.label}
                     </p>
                     <p className="mt-2 font-medium">{step.title}</p>
                   </div>
@@ -247,19 +255,19 @@ export default function ProfileQuestionnairePage() {
 
             <div className="mt-8 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="text-xs text-slate-300">
-                📌 提示：填写内容仅用于生成个性化分析，数据将严格保密。
+                机密协议：所有数据将加密传输至你的专属时空档案，仅用于生成个人航线分析。
               </div>
               <div className="flex flex-col gap-3 md:flex-row">
                 {currentStep > 0 && (
                   <Button variant="outline" onClick={handlePrev}>
-                    上一步
+                    返回上一阶段
                   </Button>
                 )}
                 {currentStep < steps.length - 1 ? (
-                  <Button onClick={handleNext}>下一步</Button>
+                  <Button onClick={handleNext}>进入下一阶段</Button>
                 ) : (
                   <Button onClick={handleSubmit} loading={isSubmitting}>
-                    提交问卷
+                    确认坐标并进入下一步
                   </Button>
                 )}
               </div>

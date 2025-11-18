@@ -19,12 +19,12 @@ export default function HomePage() {
         <header className="mb-24 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.5rem] text-sky-300/80">
-              FutureSelf Career Studio
+              时空航行驾驶舱
             </p>
             <h1 className="mt-4 text-5xl font-extrabold tracking-tight text-white md:text-6xl">
-              未来自我
+              你好，时空旅行者
             </h1>
-            <p className="mt-4 max-w-2xl text-lg text-slate-200 md:text-xl">
+            <p className="mt-4 max-w-2xl text-lg text-slate-200 md:text-xl whitespace-nowrap">
               穿越时间的回声，探索你的职业宇宙。让未来的你为今日指引，点亮前方航线。
             </p>
           </div>
@@ -34,7 +34,7 @@ export default function HomePage() {
               <span className="flex h-2.5 w-2.5 items-center justify-center">
                 <span className="h-full w-full animate-ping rounded-full bg-emerald-300/70" />
               </span>
-              航线已就绪 · 即刻启程
+              时空链接已建立 · 航行状态正常
             </span>
           </div>
         </header>
@@ -44,10 +44,10 @@ export default function HomePage() {
           <section className="space-y-12">
             <div className="rounded-[36px] border border-white/10 bg-white/8 p-12 shadow-[0_40px_120px_-35px_rgba(30,84,255,0.55)] backdrop-blur-xl">
               <h2 className="text-3xl font-semibold text-white">
-                从这里启航
+                主控制台
               </h2>
               <p className="mt-4 text-base leading-relaxed text-slate-200">
-                通过写信、对话与AI分析，收集来自未来的回声，逐层构建属于你的成长星图。
+                从主控制台出发，通过写信、对话，发送时空信号，查收来自未来的回信。每一次交互都将校准你的个人成长航线。
               </p>
 
               <div className="mt-14 space-y-8">
@@ -62,10 +62,10 @@ export default function HomePage() {
                     </div>
                     <div>
                       <p className="text-xl font-semibold tracking-wide">
-                        写信给未来
+                        发送时空胶囊——你的信件
                       </p>
                       <p className="mt-1 text-sm text-white/85">
-                        向未来的自己发送信号，记录此刻的梦想与抉择
+                        封装当前时空坐标下的所思所想，向未来的自己发送信号
                       </p>
                     </div>
                   </div>
@@ -83,10 +83,10 @@ export default function HomePage() {
                     </div>
                     <div>
                       <p className="text-xl font-semibold tracking-wide text-white">
-                        查看收信箱
+                        查收未来回信
                       </p>
                       <p className="mt-1 text-sm text-slate-200">
-                        解锁未来来信，对照现实，修正航向
+                        解码来自未来的信件，获得航线修正建议
                       </p>
                     </div>
                   </div>
@@ -99,7 +99,7 @@ export default function HomePage() {
               <div className="rounded-3xl border border-white/10 bg-white/5 p-7 backdrop-blur">
                 <p className="flex items-center gap-2 text-sm uppercase tracking-[0.35rem] text-sky-300/70">
                   <Sparkles className="h-4 w-4 text-sky-200" />
-                  职场洞察
+                  航线洞察
                 </p>
                 <p className="mt-3 text-4xl font-bold text-white">24+</p>
                 <p className="mt-2 text-sm text-slate-300">
@@ -109,7 +109,7 @@ export default function HomePage() {
               <div className="rounded-3xl border border-white/10 bg-white/5 p-7 backdrop-blur">
                 <p className="flex items-center gap-2 text-sm uppercase tracking-[0.35rem] text-sky-300/70">
                   <Sparkles className="h-4 w-4 text-sky-200" />
-                  行动计划
+                  跃迁计划
                 </p>
                 <p className="mt-3 text-4xl font-bold text-white">12</p>
                 <p className="mt-2 text-sm text-slate-300">

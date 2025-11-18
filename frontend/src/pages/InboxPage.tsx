@@ -21,7 +21,7 @@ export default function InboxPage() {
 
   useEffect(() => {
     if (!userId) {
-      setError('未找到用户信息')
+      setError('未找到用户坐标')
       setIsLoading(false)
       return
     }
@@ -46,11 +46,11 @@ export default function InboxPage() {
   const getChatStatusText = (status: string) => {
     switch (status) {
       case 'NOT_STARTED':
-        return '未开始'
+        return '链接待开启'
       case 'COMPLETED':
-        return '已完成'
+        return '链接已归档'
       default:
-        return '未知'
+        return '状态未知'
     }
   }
 
@@ -79,7 +79,7 @@ export default function InboxPage() {
               <div className="w-2 h-2 bg-sky-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
               <div className="w-2 h-2 bg-sky-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
             </div>
-            <p className="mt-4 text-slate-200">正在加载收信箱...</p>
+            <p className="mt-4 text-slate-200">正在从未来时间线拉取信号...</p>
           </div>
         </div>
       </StarFieldLayout>
@@ -107,10 +107,10 @@ export default function InboxPage() {
         <div className="mx-auto flex w-full max-w-[1100px] flex-col">
           <header className="mb-12">
             <p className="text-xs uppercase tracking-[0.45rem] text-sky-200/80">
-              Step F6.5
+              时空信号接收站
             </p>
             <h1 className="mt-3 text-4xl font-extrabold text-white md:text-5xl">
-              收信箱
+              未来回响
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-200">
               在这里查看来自未来自我的回信。
@@ -119,9 +119,9 @@ export default function InboxPage() {
 
           <section className="rounded-[32px] border border-white/10 bg-white/8 p-10 shadow-[0_45px_140px_-45px_rgba(78,138,255,0.6)] backdrop-blur-xl">
             <div className="text-center py-12">
-              <p className="text-lg text-slate-200">暂无回信</p>
+              <p className="text-lg text-slate-200">信号接收站为空</p>
               <p className="mt-2 text-sm text-slate-300">
-                完成写信后，未来自我的回信将出现在这里。
+                发送你的第一份时空胶囊后，来自未来的回响将会在这里被捕获。
               </p>
             </div>
           </section>
@@ -135,13 +135,13 @@ export default function InboxPage() {
       <div className="mx-auto flex w-full max-w-[1100px] flex-col">
         <header className="mb-12">
           <p className="text-xs uppercase tracking-[0.45rem] text-sky-200/80">
-            Step F6.5
+            时空信号接收站
           </p>
           <h1 className="mt-3 text-4xl font-extrabold text-white md:text-5xl">
-            收信箱
+            未来回响
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-200">
-            来自未来自我的回信。点击信封查看完整内容，开始与未来的自己对话。
+            你发送的时空胶囊已收到来自未来的回响。点击信号卡片，解码完整信息，并开始与你的未来化身进行深度链接。
           </p>
         </header>
 
@@ -150,7 +150,7 @@ export default function InboxPage() {
           {inboxData.letter_content_snippet && (
             <div className="mb-8 rounded-2xl border border-white/10 bg-white/5 p-6">
               <p className="text-xs uppercase tracking-[0.3rem] text-sky-200/70 mb-3">
-                你的信件
+                你发送的原始信号
               </p>
               <p className="text-sm text-slate-200 leading-relaxed">
                 {inboxData.letter_content_snippet}
@@ -188,7 +188,7 @@ export default function InboxPage() {
                 {/* 人设名称 */}
                 <div className="mb-4 pr-16">
                   <p className="text-xs uppercase tracking-[0.3rem] text-sky-200/70 mb-2">
-                    来自
+                    信号来源
                   </p>
                   <h3 className="text-xl font-bold text-white group-hover:text-sky-200 transition-colors">
                     {reply.from_profile_name}
@@ -209,7 +209,7 @@ export default function InboxPage() {
                 {/* 点击提示 */}
                 <div className="mt-4 pt-4 border-t border-white/10">
                   <p className="text-xs text-slate-300/70 group-hover:text-sky-200/70 transition-colors">
-                    点击查看完整回信 →
+                    解码信号 →
                   </p>
                 </div>
 
